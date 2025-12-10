@@ -41,6 +41,20 @@ android {
     buildFeatures {
         compose = true
     }
+
+    // --- NUEVO BLOQUE AGREGADO PARA CORREGIR WARNINGS DE PRUEBAS ---
+    // --- BLOQUE CORREGIDO ---
+    testOptions {
+        unitTests {
+            // Ayuda a que las pruebas no fallen por usar métodos de Android no mockeados
+            isReturnDefaultValues = true
+            all {
+                // CORRECCIÓN: Usamos 'it.jvmArgs' en lugar de solo 'jvmArgs'
+                it.jvmArgs("-XX:+EnableDynamicAgentLoading")
+            }
+        }
+    }
+    // ------------------------
 }
 
 dependencies {
@@ -87,6 +101,28 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.mlkit.barcode.scanning)
+
+
+
+    // --- INICIO DEL BLOQUE DE PRUEBAS ---
+    // JUnit 4 (Generalmente ya viene por defecto, verifica que esté)
+    testImplementation("junit:junit:4.13.2")
+
+    // NUEVO: MockK para simular objetos en Kotlin
+    testImplementation("io.mockk:mockk:1.13.8")
+    testImplementation("io.mockk:mockk-jvm:1.13.8") // Agrega esta si no la tienes
+
+    // NUEVO: Librería para probar corrutinas (necesario para ViewModels)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    // --- FIN DEL BLOQUE DE PRUEBAS ---
+
+    // (mantén el resto de dependencias que tenías abajo, como las de androidTest)
+    androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+
 
     // --- Testing ---
     testImplementation(libs.junit)
