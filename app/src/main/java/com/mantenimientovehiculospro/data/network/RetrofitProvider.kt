@@ -33,6 +33,9 @@ object RetrofitProvider {
 
         // Opción 1: Para el teléfono conectado por USB (la más recomendada).
         // Antes de correr la app, tengo que ejecutar este comando en la terminal:
+
+        // Funciona en cualquier red junto al comando  /Users/vitodatrah/Library/Android/sdk/platform-tools/adb -s R5CW128QKRV reverse tcp:8080 tcp:8080
+
         // adb reverse tcp:8080 tcp:8080
         // Esto hace que el puerto 8080 del teléfono se conecte al 8080 de mi computador.
         val ip = "127.0.0.1"
