@@ -7,9 +7,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.mantenimientovehiculospro.ui.screens.AddVehiculoScreen
+import com.mantenimientovehiculospro.ui.screens.CrearMantenimientoScreen
 import com.mantenimientovehiculospro.ui.screens.DetalleVehiculoScreen
-import com.mantenimientovehiculospro.ui.screens.VehiculoScreen
+import com.mantenimientovehiculospro.ui.screens.EditarMantenimientoScreen
+import com.mantenimientovehiculospro.ui.screens.EditarVehiculoScreen
 import com.mantenimientovehiculospro.ui.screens.QrScannerScreen
+import com.mantenimientovehiculospro.ui.screens.VehiculoScreen
 
 // Este es el controlador principal de la navegación de la app.
 // Básicamente, es el que sabe qué pantalla mostrar en cada momento.
@@ -67,30 +70,60 @@ fun AppNavHost(usuarioId: Long) {
         }
 
         // Ruta para la pantalla de detalle de un vehículo.
-        // Ojo: La ruta incluye "{vehiculoId}" para poder recibir el ID del auto.
         composable(
             route = "detalleVehiculo/{vehiculoId}",
-            // Aquí le digo que el "vehiculoId" que viene en la ruta es un número (Long).
             arguments = listOf(navArgument("vehiculoId") { type = NavType.LongType })
         ) { backStackEntry ->
-            // Saco el ID de los argumentos que vienen en la ruta.
             val vehiculoId = backStackEntry.arguments!!.getLong("vehiculoId")
             DetalleVehiculoScreen(
                 vehiculoId = vehiculoId,
                 onBack = { navController.popBackStack() },
-                // TODO: Conectar estas acciones con sus respectivas pantallas.
-                onEditar = { id -> /* navController.navigate("editarVehiculo/$id") */ },
-                onAgregarMantenimiento = { id -> /* navController.navigate("crearMantenimiento/$id") */ },
-                onEditarMantenimiento = { id -> /* navController.navigate("editarMantenimiento/$id") */ },
-                onEliminarMantenimiento = { id -> false } // Esto se maneja dentro de la pantalla ahora.
+                onEditar = { id -> navController.navigate("editarVehiculo/$id") },
+                onAgregarMantenimiento = { id -> navController.navigate("crearMantenimiento/$id") },
+                onEditarMantenimiento = { id -> navController.navigate("editarMantenimiento/$id") },
+                onEliminarMantenimiento = { id -> false } // Se maneja internamente
+            )
+        }
+
+        // NUEVA RUTA: Editar Vehículo
+        composable(
+            route = "editarVehiculo/{vehiculoId}",
+            arguments = listOf(navArgument("vehiculoId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val vehiculoId = backStackEntry.arguments!!.getLong("vehiculoId")
+            EditarVehiculoScreen(
+                vehiculoId = vehiculoId,
+                navController = navController // Pasamos el controlador
+            )
+        }
+
+        // NUEVA RUTA: Crear Mantenimiento
+        composable(
+            route = "crearMantenimiento/{vehiculoId}",
+            arguments = listOf(navArgument("vehiculoId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val vehiculoId = backStackEntry.arguments!!.getLong("vehiculoId")
+            CrearMantenimientoScreen(
+                vehiculoId = vehiculoId,
+                navController = navController // Pasamos el controlador
+            )
+        }
+
+        // NUEVA RUTA: Editar Mantenimiento
+        composable(
+            route = "editarMantenimiento/{mantenimientoId}",
+            arguments = listOf(navArgument("mantenimientoId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val mantenimientoId = backStackEntry.arguments!!.getLong("mantenimientoId")
+            EditarMantenimientoScreen(
+                mantenimientoId = mantenimientoId,
+                navController = navController // Pasamos el controlador
             )
         }
     }
 }
 
 // Una función pequeña que hice para "limpiar" el texto que me da el QR.
-// Intenta sacar el ID del vehículo, sin importar si viene como "VEHICULO:123"
-// o como parte de una URL.
 private fun parseVehiculoId(qrValue: String): Long? {
     return if (qrValue.startsWith("VEHICULO:")) {
         qrValue.removePrefix("VEHICULO:").toLongOrNull()

@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.mantenimientovehiculospro.R
 import com.mantenimientovehiculospro.data.model.Mantenimiento
 import com.mantenimientovehiculospro.data.network.RetrofitProvider
@@ -26,10 +27,8 @@ import kotlinx.coroutines.launch
 fun EditarMantenimientoScreen(
     // El ID del mantenimiento que quiero editar. Me lo pasan desde la pantalla anterior.
     mantenimientoId: Long,
-    // La función para volver a la pantalla de detalles cuando guarde los cambios.
-    onMantenimientoActualizado: (vehiculoId: Long) -> Unit,
-    // La función para volver si presiono "cancelar" o la flecha de atrás.
-    onCancelar: () -> Unit
+    // CORRECCIÓN: Recibimos el NavController directamente.
+    navController: NavController
 ) {
     val scope = rememberCoroutineScope() // Para llamar a la API.
 
@@ -80,8 +79,9 @@ fun EditarMantenimientoScreen(
             topBar = {
                 TopAppBar(
                     title = { Text("Editar Mantenimiento") },
+                    // CORRECCIÓN: Usamos popBackStack() para volver.
                     navigationIcon = {
-                        IconButton(onClick = onCancelar) {
+                        IconButton(onClick = { navController.popBackStack() }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                         }
                     },
@@ -160,8 +160,11 @@ fun EditarMantenimientoScreen(
                         try {
                             // Llamo a la API para actualizar el mantenimiento.
                             RetrofitProvider.instance.actualizarMantenimiento(mantenimientoId, actualizado)
-                            // Si todo sale bien, aviso a la pantalla anterior para que vuelva.
-                            onMantenimientoActualizado(actualizado.vehiculoId)
+
+                            // CORRECCIÓN: Avisamos para refrescar y cerramos la pantalla.
+                            navController.previousBackStackEntry?.savedStateHandle?.set("refrescar_mantenimientos", true)
+                            navController.popBackStack()
+
                         } catch (e: Exception) {
                             error = "Error al actualizar: ${e.message}"
                         }

@@ -158,7 +158,8 @@ fun EditarVehiculoScreen(
 
                                 // Truco para avisarle a la pantalla anterior que debe refrescar sus datos.
                                 navController.previousBackStackEntry?.savedStateHandle?.set("refrescar", true)
-                                // Vuelvo a la pantalla de detalle del vehículo.
+
+                                // CORRECCIÓN: Usamos popBackStack() para volver, no navigate().
                                 navController.popBackStack()
                             } catch (e: Exception) {
                                 error = "Error al actualizar el vehículo: ${e.message}"

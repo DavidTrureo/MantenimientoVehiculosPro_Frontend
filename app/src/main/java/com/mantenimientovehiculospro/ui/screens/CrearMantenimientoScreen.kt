@@ -5,6 +5,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.mantenimientovehiculospro.R
 import com.mantenimientovehiculospro.data.model.EstadoMantenimiento
 import com.mantenimientovehiculospro.data.model.Mantenimiento
@@ -41,10 +43,8 @@ import java.time.format.DateTimeFormatter
 fun CrearMantenimientoScreen(
     // El ID del auto al que le estoy agregando el mantenimiento.
     vehiculoId: Long,
-    // La función para volver atrás cuando se guarda todo bien.
-    onMantenimientoGuardado: () -> Unit,
-    // La función para volver atrás si presiono "cancelar" o la flecha.
-    onCancelar: () -> Unit
+    // CORRECCIÓN: Recibimos el NavController directamente para manejar la navegación.
+    navController: NavController
 ) {
     val scope = rememberCoroutineScope() // Para llamar a la API.
 
@@ -65,6 +65,8 @@ fun CrearMantenimientoScreen(
     var historial by remember { mutableStateOf<List<Mantenimiento>>(emptyList()) }
     var ultimaMantencion by remember { mutableStateOf<Mantenimiento?>(null) }
     var kilometrajeError by remember { mutableStateOf<String?>(null) } // Para el error del campo kilometraje.
+    var isSaving by remember { mutableStateOf(false) } // NUEVO: Para evitar el doble clic y dar feedback.
+
 
     // Este LaunchedEffect se ejecuta una sola vez cuando la pantalla carga.
     // Lo uso para pedirle a la API todo el historial de mantenimientos de este auto.
@@ -107,7 +109,8 @@ fun CrearMantenimientoScreen(
             topBar = {
                 TopAppBar(
                     title = { Text("Nuevo Mantenimiento") },
-                    navigationIcon = { IconButton(onClick = onCancelar) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } },
+                    // CORRECCIÓN: Usamos popBackStack() para volver atrás.
+                    navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
                 )
             }
@@ -163,12 +166,17 @@ fun CrearMantenimientoScreen(
                 // El botón para guardar. Solo se puede presionar si 'isFormValid' es true.
                 Button(
                     onClick = {
+                        // Doble chequeo por si acaso, aunque el botón debería estar deshabilitado.
+                        if (isSaving) return@Button
+
                         // Valido que la fecha no sea en el futuro.
                         val fechaSeleccionada = LocalDate.parse(fechaISO, DateTimeFormatter.ISO_DATE)
                         if (fechaSeleccionada.isAfter(LocalDate.now())) {
                             errorGeneral = "La fecha no puede ser futura."
                             return@Button
                         }
+
+                        isSaving = true // Inicia el estado de guardado.
 
                         // Creo el objeto Mantenimiento con todos los datos del formulario.
                         val mantenimiento = Mantenimiento(id = null, tipo = tipo, descripcion = descripcion, fecha = fechaISO, kilometraje = kilometrajeTexto.toInt(), estado = EstadoMantenimiento.PROXIMO, vehiculoId = vehiculoId)
@@ -177,17 +185,28 @@ fun CrearMantenimientoScreen(
                             try {
                                 // Llamo a la API para guardarlo.
                                 RetrofitProvider.instance.crearMantenimiento(vehiculoId, mantenimiento)
-                                // Si todo va bien, llamo a la función para volver atrás.
-                                onMantenimientoGuardado()
+
+                                // CORRECCIÓN: Avisamos a la pantalla anterior que se actualice y cerramos esta.
+                                navController.previousBackStackEntry?.savedStateHandle?.set("refrescar_mantenimientos", true)
+                                navController.popBackStack()
                             } catch (e: Exception) {
                                 // Si algo falla, muestro el error.
                                 errorGeneral = "Error al guardar: ${e.message}"
+                                isSaving = false // Si hay error, permito volver a intentarlo.
                             }
                         }
                     },
-                    enabled = isFormValid
+                    enabled = isFormValid && !isSaving
                 ) {
-                    Text("Guardar")
+                    if (isSaving) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Guardar")
+                    }
                 }
 
                 // Muestro el error general si es que existe.

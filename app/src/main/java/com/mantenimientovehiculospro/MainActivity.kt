@@ -8,7 +8,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.mantenimientovehiculospro.data.network.RetrofitProvider
 import com.mantenimientovehiculospro.ui.screens.*
 import com.mantenimientovehiculospro.ui.theme.MantenimientoVehiculosProTheme
 
@@ -124,13 +123,7 @@ class MainActivity : ComponentActivity() {
                         val vehiculoId = backStackEntry.arguments?.getLong("vehiculoId") ?: return@composable
                         CrearMantenimientoScreen(
                             vehiculoId = vehiculoId,
-                            onMantenimientoGuardado = {
-                                // Cuando guardo, vuelvo a la pantalla de detalle del vehículo.
-                                navController.navigate("vehiculo_detail/$vehiculoId") {
-                                    popUpTo("crearMantenimiento/$vehiculoId") { inclusive = true }
-                                }
-                            },
-                            onCancelar = { navController.popBackStack() }
+                            navController = navController
                         )
                     }
 
@@ -142,13 +135,7 @@ class MainActivity : ComponentActivity() {
                         val mantenimientoId = backStackEntry.arguments?.getLong("mantenimientoId") ?: return@composable
                         EditarMantenimientoScreen(
                             mantenimientoId = mantenimientoId,
-                            onMantenimientoActualizado = { vehiculoId ->
-                                // Cuando guardo, vuelvo a la pantalla de detalle del vehículo al que pertenece.
-                                navController.navigate("vehiculo_detail/$vehiculoId") {
-                                    popUpTo("editarMantenimiento/$mantenimientoId") { inclusive = true }
-                                }
-                            },
-                            onCancelar = { navController.popBackStack() }
+                            navController = navController
                         )
                     }
 
